@@ -1,5 +1,6 @@
 #include "../inc/minishell.h"
 
+// '$' isn't implemented yet
 char	*ft_strtok(char *input, char *split)
 {
 	static char	*last_s;
@@ -28,11 +29,59 @@ char	*ft_strtok(char *input, char *split)
 	return (curr_s);
 }
 
+void	ft_exec(char **str)
+{
+	char	*path;
+	int		found;
+	char	*tmp;
+	char	*aux;
+	pid_t	pid;
+	char	*args[3];
+	int		start;
+
+	found = 0;
+	start = 0;
+	path = getenv("PATH");
+	tmp = ft_strtok(path, ":");
+	while (*tmp != '\0' && found == 0 && found != -1)
+	{
+		if (start != 0)
+			tmp = ft_strtok(NULL, ":");
+		if (*tmp == '\0')
+			found = -1;
+		start = 1;
+		tmp = ft_strjoin(tmp, "/");
+		aux = tmp;
+		tmp = ft_strjoin(tmp, str[0]);
+		free(aux);
+		if (access(tmp, F_OK) == 0)
+			found = 1;
+		else
+			free(tmp);
+	}
+	if (found == 1)
+	{
+		args[0] = tmp;
+		if (str[1] != NULL)
+			args[1] = str[1];
+		args[2] = NULL;
+		pid = fork();
+		if (pid == 0)
+			execve(tmp, args, NULL);
+		else
+			waitpid(pid, NULL, 0);
+	}
+	else
+		printf("Command \"%s\" not found\n", str[0]);
+}
+
 int main()
 {
-    char *input;
-	char *token;
+    char	*input;
+	char	*buff[50];
+	int		i;
 
+	i = 0;
     printf ("Bienvenido a iminimishell!\n");
 	while (1)
 	{
@@ -40,12 +89,15 @@ int main()
 		if (ft_strncmp(input, "exit()", 6) == 0)
 			break;
 		add_history(input);
-		token = ft_strtok(input, " ");
-		while (*token != '\0')
+		buff[i] = ft_strtok(input, " ");
+		while (*buff[i] != '\0')
 		{
-			printf("token: %s\n", token);
-			token = ft_strtok(NULL, " ");
+			i++;
+			buff[i] = ft_strtok(NULL, " ");
 		}
+		ft_exec(buff);
+		// liberar buff y input
+		i = 0;
 	}
     free(input);
     return 0;

@@ -3,7 +3,8 @@
 #include "../libft/libft.h"
 #include <readline/readline.h>
 #include <readline/history.h>
-
+#include <sys/wait.h>
+extern char	*env;
 typedef struct s_args
 {
 	char	*str;
